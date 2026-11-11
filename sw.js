@@ -1,5 +1,5 @@
 // Offline cache. Bump VERSION whenever any app file changes so phones pick up the update.
-const VERSION = 'brad-pep-log-v1';
+const VERSION = 'brad-pep-log-v2';
 const FILES = [
   './',
   './index.html',

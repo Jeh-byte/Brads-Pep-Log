@@ -436,4 +436,36 @@ async function seedSetup() {
     }
     await DB.setMeta('schedulesSeeded', new Date().toISOString());
   }
+  // 3 mL bac water on every peptide and mixed vial, Reta 20 mg at 2 mg; fixed units are cleared so they
+  // are worked out from the mix (500 mcg = 15 units). Applied once.
+  if (!(await DB.getMeta('mix3ml'))) {
+    const c = window.SEED_MIX3;
+    const reta = findPeptide(c.reta.peptide);
+    const ids = new Set();
+    for (const n of c.names) {
+      const p = findPeptide(n);
+      if (!p) continue;
+      ids.add(p.id);
+      const patch = { ...p, bacWaterMl: c.ml };
+      if (reta && p.id === reta.id) patch.vialAmount = c.reta.vialAmount;
+      const rec = await DB.put('peptides', patch);
+      state.peptides = state.peptides.map((x) => (x.id === rec.id ? rec : x));
+      for (const v of state.vials.filter((x) => x.peptideId === p.id && x.status === 'active')) {
+        const vr = await DB.put('vials', { ...v, diluentMl: c.ml, ...(reta && p.id === reta.id ? { amount: c.reta.vialAmount } : {}) });
+        state.vials = state.vials.map((x) => (x.id === vr.id ? vr : x));
+      }
+    }
+    for (const s of state.schedules) {
+      if (!s.items.some((it) => ids.has(it.peptideId))) continue;
+      const items = s.items.map((it) => {
+        if (!ids.has(it.peptideId)) return it;
+        const out = { ...it, volume: null, volumeUnit: 'units' };
+        if (reta && it.peptideId === reta.id) Object.assign(out, { dose: c.reta.dose, doseUnit: c.reta.doseUnit });
+        return out;
+      });
+      const rec = await DB.put('schedules', { ...s, items });
+      state.schedules = state.schedules.map((x) => (x.id === rec.id ? rec : x));
+    }
+    await DB.setMeta('mix3ml', new Date().toISOString());
+  }
 }
