@@ -1,0 +1,12 @@
+{
+  "appId": "io.github.jehbyte.bradpeplog",
+  "appName": "Brad's Pep Log",
+  "webDir": "www",
+  "loggingBehavior": "production",
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_dose",
+      "iconColor": "#0f766e"
+    }
+  }
+}
